@@ -1,0 +1,163 @@
+body {
+    font-family: var(--vscode-font-family);
+    padding: 10px;
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+h2 {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+h3 {
+    font-size: 0.9em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    color: var(--vscode-descriptionForeground);
+}
+
+.card {
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-widget-border);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Status Indicator */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: var(--vscode-badge-background); /* Default background */
+    color: var(--vscode-badge-foreground);
+}
+
+.status-indicator.active .dot {
+    background-color: #4CAF50;
+    box-shadow: 0 0 5px #4CAF50;
+}
+
+.status-indicator.inactive .dot {
+    background-color: #F44336;
+}
+
+.dot {
+    height: 8px;
+    width: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    display: inline-block;
+}
+
+/* Toggle Switch */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--vscode-button-background);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--vscode-button-background);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.slider.round {
+    border-radius: 20px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 5px;
+}
+
+.primary-btn {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.primary-btn:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.secondary-btn {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.secondary-btn:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.info-card p {
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
