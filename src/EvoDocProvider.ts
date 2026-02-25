@@ -32,7 +32,9 @@ export class EvoDocProvider implements vscode.WebviewViewProvider {
                 case 'generate':
                     vscode.commands.executeCommand('evodoc.generate');
                     break;
-
+                case 'exportDocs':
+                    vscode.commands.executeCommand('evodoc.exportDocs');
+                    break;
             }
         });
     }
@@ -89,6 +91,7 @@ export class EvoDocProvider implements vscode.WebviewViewProvider {
                     <div class="card">
                         <h3>Actions</h3>
                         <button id="generate-btn" class="primary-btn">Generate Documentation</button>
+                        <button id="export-btn" class="secondary-btn">Download Documentation</button>
                     </div>
 
 

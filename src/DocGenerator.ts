@@ -14,15 +14,13 @@ export class DocGenerator {
         const docPath = path.join(workspaceFolder.uri.fsPath, 'Documentation');
 
         if (!fs.existsSync(docPath)) {
-            // First time creation or user deleted it
-            // We can proceed to create it
             fs.mkdirSync(docPath);
         }
 
         const sourceCode = await this.collectSourceCode(workspaceFolder.uri.fsPath);
 
         if (sourceCode.length === 0) {
-            return; // No source code found to document
+            return; 
         }
 
         vscode.window.showInformationMessage('EvoDoc: Generating Documentation... This may take a moment.');
@@ -33,7 +31,7 @@ export class DocGenerator {
                 this.generateArchitecture(docPath, sourceCode),
                 this.generateApiDoc(docPath, sourceCode),
                 this.generateModuleDesc(docPath, sourceCode),
-                this.generateChangeLog(docPath, sourceCode) // Initial Changelog
+                this.generateChangeLog(docPath, sourceCode) 
             ]);
 
             vscode.window.showInformationMessage('EvoDoc: Documentation Generated Successfully!');
@@ -49,7 +47,6 @@ export class DocGenerator {
 
         let content = '';
 
-        // Helper function for recursion
         const walk = (dir: string) => {
             const files = fs.readdirSync(dir);
             for (const file of files) {
@@ -143,7 +140,7 @@ export class DocGenerator {
              Role: Technical Writer
              Task: Create an initial Change_Log.md.
              Entries: Initial documentation generation.
-             `; // For fresh gen, creates initial entry.
+             `; 
         }
 
         const content = await this.groqService.generateContent(prompt);

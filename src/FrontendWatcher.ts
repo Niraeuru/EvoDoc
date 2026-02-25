@@ -7,7 +7,7 @@ export class FrontendWatcher {
     private screenshotManager: ScreenshotManager;
     private disposables: vscode.Disposable[] = [];
 
-    // Define supported extensions
+    //Supported extensions
     private readonly validExtensions = ['.html', '.css', '.js', '.ts', '.jsx', '.tsx'];
 
     constructor(screenshotManager: ScreenshotManager) {
@@ -20,7 +20,7 @@ export class FrontendWatcher {
     }
 
     private setupListeners() {
-        // On File Change
+        // On file change
         this.watcher.onDidChange(async (uri) => {
             if (!this.shouldProcessFile(uri)) { return; }
 
@@ -33,9 +33,7 @@ export class FrontendWatcher {
 
                 const dir = path.dirname(uri.fsPath);
 
-                const fs = require('fs'); // verify import or use vscode.workspace.fs (async)
-
-                // Let's use vscode.workspace.findFiles with a relative pattern for robustness
+                const fs = require('fs'); 
                 const relativePattern = new vscode.RelativePattern(dir, '*.html');
                 const htmlFiles = await vscode.workspace.findFiles(relativePattern);
 

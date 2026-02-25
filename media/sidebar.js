@@ -11,6 +11,7 @@
     const toggleSwitch = /** @type {HTMLInputElement} */ (document.getElementById('toggle-switch'));
     const toggleLabel = document.getElementById('toggle-label');
     const generateBtn = document.getElementById('generate-btn');
+    const exportBtn = document.getElementById('export-btn');
 
     // Restore state
     const previousState = vscode.getState();
@@ -37,6 +38,10 @@
 
     generateBtn?.addEventListener('click', () => {
         vscode.postMessage({ type: 'generate' });
+    });
+
+    exportBtn?.addEventListener('click', () => {
+        vscode.postMessage({ type: 'exportDocs' });
     });
 
     /**

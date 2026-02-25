@@ -72,6 +72,7 @@
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
+        "@types/adm-zip": "^0.5.7",
         "@types/mocha": "^10.0.6",
         "@types/node": "20.x",
         "@types/vscode": "^1.85.0",
@@ -84,6 +85,7 @@
         "typescript": "^5.3.3"
     },
     "dependencies": {
+        "adm-zip": "^0.5.16",
         "groq-sdk": "^0.3.3",
         "puppeteer": "^24.37.2"
     }

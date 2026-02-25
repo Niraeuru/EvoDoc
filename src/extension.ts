@@ -5,6 +5,7 @@ import { DocGenerator } from './DocGenerator';
 import { ChangeTracker } from './ChangeTracker';
 import { ScreenshotManager } from './ScreenshotManager';
 import { FrontendWatcher } from './FrontendWatcher';
+import { ExportService } from './ExportService';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('EvoDoc is now active!');
@@ -14,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
     const docGenerator = new DocGenerator(groqService);
     const changeTracker = new ChangeTracker();
     const screenshotManager = new ScreenshotManager();
+    const exportService = new ExportService();
     // Watcher is initialized but we might want to only enable it when isEnabled is true
     // However, the requirement says "The module should only operate when EvoDoc is enabled"
     // So we'll manage the watcher subscription dynamically or check the flag inside.
@@ -68,6 +70,13 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Generate for the first workspace folder for now
             await docGenerator.generateDocumentation(workspaceFolders[0]);
+        })
+    );
+
+    // Command: Export Documentation
+    context.subscriptions.push(
+        vscode.commands.registerCommand('evodoc.exportDocs', async () => {
+            await exportService.exportDocumentation();
         })
     );
 
@@ -139,5 +148,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    // Cleanup is handled by disposables usually, but we can be explicit
 }

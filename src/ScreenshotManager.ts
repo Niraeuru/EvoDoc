@@ -38,7 +38,7 @@ export class ScreenshotManager {
 
 
     public async captureScreenshot(filePath: string) {
-        // Enforce HTML only
+
         if (path.extname(filePath).toLowerCase() !== '.html') {
             console.log(`EvoDoc: Skipping screenshot for non-HTML file: ${filePath}`);
             return;
@@ -65,7 +65,6 @@ export class ScreenshotManager {
             const frontendDocPath = path.join(rootPath, 'Documentation', 'Front_end');
             const savePath = path.join(frontendDocPath, screenshotName);
 
-            // Ensure folder exists just in case
             if (!fs.existsSync(frontendDocPath)) {
                 fs.mkdirSync(frontendDocPath, { recursive: true });
             }
@@ -73,14 +72,11 @@ export class ScreenshotManager {
             const browser = await this.getBrowser();
             const page = await browser.newPage();
 
-            // Set a reasonable viewport
             await page.setViewport({ width: 1280, height: 800 });
 
-            // File URL for local files
             const fileUrl = `file://${filePath}`;
             await page.goto(fileUrl, { waitUntil: 'networkidle0' });
 
-            // Capture screenshot
             await page.screenshot({ path: savePath, fullPage: true });
 
             console.log(`EvoDoc: Screenshot saved to ${savePath}`);
