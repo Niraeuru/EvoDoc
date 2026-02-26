@@ -45,6 +45,10 @@
             {
                 "command": "evodoc.updateScreenshots",
                 "title": "EvoDoc: Update Frontend Screenshots"
+            },
+            {
+                "command": "evodoc.validateDocs",
+                "title": "EvoDoc: Validate Documentation"
             }
         ],
         "configuration": {

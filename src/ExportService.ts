@@ -7,16 +7,13 @@ export class ExportService {
 
     constructor() { }
 
-    /**
-     * Initiates the ZIP export process.
-     */
     public async exportDocumentation() {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
             vscode.window.showErrorMessage('EvoDoc: No workspace open.');
             return;
         }
-
+ 
         const workspaceRoot = workspaceFolders[0].uri.fsPath;
         const docsPath = path.join(workspaceRoot, 'Documentation');
 
@@ -32,9 +29,6 @@ export class ExportService {
         }
     }
 
-    /**
-     * Compresses the documentation folder into a ZIP file.
-     */
     private async exportAsZip(sourcePath: string, projectName: string) {
         const date = new Date().toISOString().split('T')[0];
         const defaultFileName = `EvoDoc_${projectName}_${date}.zip`;
@@ -51,7 +45,6 @@ export class ExportService {
             return;
         }
 
-        // Show progress indicator
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: "EvoDoc: Exporting Documentation as ZIP",
@@ -62,8 +55,27 @@ export class ExportService {
             return new Promise<void>((resolve, reject) => {
                 try {
                     const zip = new AdmZip();
-                    // Add the entire directory to the zip
-                    zip.addLocalFolder(sourcePath);
+
+                    const addFolderToZip = (folderPath: string, parentZipPath: string) => {
+                        const items = fs.readdirSync(folderPath);
+                        for (const item of items) {
+                            const itemPath = path.join(folderPath, item);
+                            const stat = fs.statSync(itemPath);
+                            if (stat.isDirectory()) {
+                                const newZipPath = parentZipPath ? `${parentZipPath}/${item}` : item;
+                                addFolderToZip(itemPath, newZipPath);
+                            } else {
+                                if (item.endsWith('.md')) {
+                                    const newName = item.replace(/\.md$/, '.txt');
+                                    zip.addLocalFile(itemPath, parentZipPath, newName);
+                                } else {
+                                    zip.addLocalFile(itemPath, parentZipPath);
+                                }
+                            }
+                        }
+                    };
+
+                    addFolderToZip(sourcePath, '');
 
                     zip.writeZip(uri.fsPath, (error: any) => {
                         if (error) {

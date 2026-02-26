@@ -12,6 +12,7 @@
     const toggleLabel = document.getElementById('toggle-label');
     const generateBtn = document.getElementById('generate-btn');
     const exportBtn = document.getElementById('export-btn');
+    const validateBtn = document.getElementById('validate-btn');
 
     // Restore state
     const previousState = vscode.getState();
@@ -42,6 +43,10 @@
 
     exportBtn?.addEventListener('click', () => {
         vscode.postMessage({ type: 'exportDocs' });
+    });
+
+    validateBtn?.addEventListener('click', () => {
+        vscode.postMessage({ type: 'validateDocs' });
     });
 
     /**

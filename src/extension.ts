@@ -6,6 +6,7 @@ import { ChangeTracker } from './ChangeTracker';
 import { ScreenshotManager } from './ScreenshotManager';
 import { FrontendWatcher } from './FrontendWatcher';
 import { ExportService } from './ExportService';
+import { DocValidator } from './DocValidator';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('EvoDoc is now active!');
@@ -16,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     const changeTracker = new ChangeTracker();
     const screenshotManager = new ScreenshotManager();
     const exportService = new ExportService();
+    const docValidator = new DocValidator();
     // Watcher is initialized but we might want to only enable it when isEnabled is true
     // However, the requirement says "The module should only operate when EvoDoc is enabled"
     // So we'll manage the watcher subscription dynamically or check the flag inside.
@@ -77,6 +79,19 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('evodoc.exportDocs', async () => {
             await exportService.exportDocumentation();
+        })
+    );
+
+    // Command: Validate Documentation
+    context.subscriptions.push(
+        vscode.commands.registerCommand('evodoc.validateDocs', async () => {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders) {
+                vscode.window.showErrorMessage('EvoDoc: No workspace open.');
+                return;
+            }
+            const result = await docValidator.validate(workspaceFolders[0]);
+            vscode.window.showInformationMessage(`EvoDoc: Strict Validation Complete. Coverage: ${result.coverage}%`);
         })
     );
 
