@@ -11,17 +11,7 @@ export interface ValidationResult {
 }
 
 export class DocValidator {
-    private outputChannel: vscode.OutputChannel;
-
-    constructor() {
-        this.outputChannel = vscode.window.createOutputChannel('EvoDoc Validator');
-    }
-
     public async validate(workspaceFolder: vscode.WorkspaceFolder): Promise<ValidationResult> {
-        this.outputChannel.clear();
-        this.outputChannel.show();
-        this.outputChannel.appendLine('--- Starting Validation ---');
-
         const rootPath = workspaceFolder.uri.fsPath;
         const docPath = path.join(rootPath, 'Documentation');
 
@@ -32,13 +22,9 @@ export class DocValidator {
 
         const sourceItemsSet = await this.extractSourceItems(rootPath);
         const sourceItems = Array.from(sourceItemsSet);
-        this.outputChannel.appendLine(`[Source Items Found] (${sourceItems.length}): ${sourceItems.join(', ')}`);
 
         // Re-parse all Markdown files cleanly on every execution
         const docFileItems = await this.extractDocItemsByFile(docPath, sourceItems);
-        for (const [file, items] of Object.entries(docFileItems)) {
-            this.outputChannel.appendLine(`[Doc File: ${file}] (${items.size}): ${Array.from(items).join(', ')}`);
-        }
 
         // API_Documentation.md is the designated file for functions and classes
         const apiDocItems = docFileItems['API_Documentation.md'] || new Set<string>();
@@ -71,11 +57,6 @@ export class DocValidator {
 
         const totalItems = sourceItems.length;
         const coverage = totalItems === 0 ? 100 : Math.round((properlyDocumented.length / totalItems) * 100);
-
-        this.outputChannel.appendLine(`\n--- Results ---`);
-        this.outputChannel.appendLine(`Properly Documented: ${properlyDocumented.length}`);
-        this.outputChannel.appendLine(`Missing: ${missing.length}`);
-        this.outputChannel.appendLine(`Coverage: ${coverage}%`);
 
         this.generateReport(docPath, totalItems, properlyDocumented, missing, incorrectlyPlaced, coverage);
 
@@ -162,10 +143,6 @@ export class DocValidator {
 
                             if (headingRegex.test(content)) {
                                 items.add(item);
-                                const match = content.match(headingRegex);
-                                if (match) {
-                                    this.outputChannel.appendLine(`   [Regex Match] ${file} -> "${match[0].trim()}" (Matched item: ${item})`);
-                                }
                             }
                         }
 
