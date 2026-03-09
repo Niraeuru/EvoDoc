@@ -6,6 +6,11 @@ import * as fs from 'fs';
 export class ScreenshotManager {
     private browser: puppeteer.Browser | null = null;
     private isCapturing = false;
+    private activeSizes = {
+        desktop: true,
+        tablet: false,
+        mobile: false
+    };
 
     constructor() {
         this.ensureDocumentationFolder();
@@ -25,6 +30,10 @@ export class ScreenshotManager {
         if (!fs.existsSync(frontendPath)) {
             fs.mkdirSync(frontendPath);
         }
+    }
+
+    public setSizes(sizes: { desktop: boolean, tablet: boolean, mobile: boolean }) {
+        this.activeSizes = sizes;
     }
 
     private async getBrowser(): Promise<puppeteer.Browser> {
@@ -107,12 +116,25 @@ export class ScreenshotManager {
                 return false;
             });
 
-            const viewports = [
+            const allViewports = [
                 { name: 'Desktop', width: 1280, height: 800 },
                 { name: 'Tablet', width: 768, height: 1024 },
                 { name: 'Mobile', width: 500, height: 812 }
             ];
 
+            const viewports = allViewports.filter(vp => {
+                if (vp.name === 'Desktop') return this.activeSizes.desktop;
+                if (vp.name === 'Tablet') return this.activeSizes.tablet;
+                if (vp.name === 'Mobile') return this.activeSizes.mobile;
+                return false;
+            });
+
+            if (viewports.length === 0) {
+                console.log('EvoDoc: No screenshot sizes selected. Skipping capture.');
+                this.isCapturing = false;
+                await page.close();
+                return;
+            }
             const themes: ('light' | 'dark')[] = ['light', 'dark'];
 
             for (const viewport of viewports) {

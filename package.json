@@ -28,7 +28,7 @@
             "evodoc-activitybar": [
                 {
                     "id": "evodoc-sidebar",
-                    "name": "EvoDoc Assistant",
+                    "name": "EvoDoc Menu",
                     "type": "webview"
                 }
             ]

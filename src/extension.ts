@@ -18,9 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
     const screenshotManager = new ScreenshotManager();
     const exportService = new ExportService();
     const docValidator = new DocValidator();
-    // Watcher is initialized but we might want to only enable it when isEnabled is true
-    // However, the requirement says "The module should only operate when EvoDoc is enabled"
-    // So we'll manage the watcher subscription dynamically or check the flag inside.
     let frontendWatcher: FrontendWatcher | undefined;
 
     let isEnabled = false;
@@ -82,6 +79,13 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Command: Update Screenshot Sizes
+    context.subscriptions.push(
+        vscode.commands.registerCommand('evodoc.updateScreenshotSizes', (sizes: { desktop: boolean, tablet: boolean, mobile: boolean }) => {
+            screenshotManager.setSizes(sizes);
+        })
+    );
+
     // Command: Validate Documentation
     context.subscriptions.push(
         vscode.commands.registerCommand('evodoc.validateDocs', async () => {
@@ -99,11 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand('evodoc.updateScreenshots', async () => {
             vscode.window.showInformationMessage('EvoDoc: Updating all frontend screenshots...');
-            // Logic to find all frontend files and screenshot them
-            // This is a bit heavy, maybe just a message for now or implement a scan
-            // For this MVP, let's just show a notification or maybe trigger on the current file?
 
-            // Better: Let's iterate workspace files and capture.
             const files = await vscode.workspace.findFiles('**/*.{html,css,js,ts,jsx,tsx}', '**/node_modules/**');
             for (const file of files) {
                 if (!file.fsPath.includes('Documentation')) {

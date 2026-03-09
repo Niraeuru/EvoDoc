@@ -74,6 +74,10 @@ h3 {
     gap: 10px;
 }
 
+.size-toggle {
+    margin-bottom: 8px;
+}
+
 .switch {
     position: relative;
     display: inline-block;

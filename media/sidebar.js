@@ -14,6 +14,11 @@
     const exportBtn = document.getElementById('export-btn');
     const validateBtn = document.getElementById('validate-btn');
 
+    const toggleDesktop = /** @type {HTMLInputElement} */ (document.getElementById('toggle-desktop'));
+    const toggleTablet = /** @type {HTMLInputElement} */ (document.getElementById('toggle-tablet'));
+    const toggleMobile = /** @type {HTMLInputElement} */ (document.getElementById('toggle-mobile'));
+
+
     // Restore state
     const previousState = vscode.getState();
     if (previousState) {
@@ -48,6 +53,24 @@
     validateBtn?.addEventListener('click', () => {
         vscode.postMessage({ type: 'validateDocs' });
     });
+
+    function sendSizes() {
+        vscode.postMessage({
+            type: 'updateSizes',
+            sizes: {
+                desktop: toggleDesktop ? toggleDesktop.checked : true,
+                tablet: toggleTablet ? toggleTablet.checked : false,
+                mobile: toggleMobile ? toggleMobile.checked : false
+            }
+        });
+    }
+
+    toggleDesktop?.addEventListener('change', sendSizes);
+    toggleTablet?.addEventListener('change', sendSizes);
+    toggleMobile?.addEventListener('change', sendSizes);
+
+    // Send initial size state
+    sendSizes();
 
     /**
      * @param {boolean} isActive

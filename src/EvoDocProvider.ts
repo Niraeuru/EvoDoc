@@ -38,6 +38,9 @@ export class EvoDocProvider implements vscode.WebviewViewProvider {
                 case 'validateDocs':
                     vscode.commands.executeCommand('evodoc.validateDocs');
                     break;
+                case 'updateSizes':
+                    vscode.commands.executeCommand('evodoc.updateScreenshotSizes', data.sizes);
+                    break;
             }
         });
     }
@@ -96,6 +99,31 @@ export class EvoDocProvider implements vscode.WebviewViewProvider {
                         <button id="generate-btn" class="primary-btn">Generate Documentation</button>
                         <button id="export-btn" class="secondary-btn">Download Documentation</button>
                         <button id="validate-btn" class="secondary-btn">Validate Documentation</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Screenshot Sizes</h3>
+                        <div class="toggle-container size-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-desktop" checked>
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Desktop</span>
+                        </div>
+                        <div class="toggle-container size-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-tablet">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Tablet</span>
+                        </div>
+                        <div class="toggle-container size-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-mobile">
+                                <span class="slider round"></span>
+                            </label>
+                            <span>Mobile</span>
+                        </div>
                     </div>
 
 
