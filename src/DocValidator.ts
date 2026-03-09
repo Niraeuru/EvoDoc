@@ -23,10 +23,7 @@ export class DocValidator {
         const sourceItemsSet = await this.extractSourceItems(rootPath);
         const sourceItems = Array.from(sourceItemsSet);
 
-        // Re-parse all Markdown files cleanly on every execution
         const docFileItems = await this.extractDocItemsByFile(docPath, sourceItems);
-
-        // API_Documentation.md is the designated file for functions and classes
         const apiDocItems = docFileItems['API_Documentation.md'] || new Set<string>();
 
         const properlyDocumented: string[] = [];
@@ -34,11 +31,9 @@ export class DocValidator {
         const incorrectlyPlaced: Array<{ item: string, foundIn: string[] }> = [];
 
         for (const item of sourceItems) {
-            // Check if item is correctly placed in API_Documentation.md
             if (apiDocItems.has(item)) {
                 properlyDocumented.push(item);
-            } else {
-                // Determine if it was incorrectly placed in a different file
+            } else {  
                 const foundInFiles: string[] = [];
                 for (const [fileName, items] of Object.entries(docFileItems)) {
                     if (fileName !== 'API_Documentation.md' && items.has(item)) {
@@ -48,9 +43,9 @@ export class DocValidator {
 
                 if (foundInFiles.length > 0) {
                     incorrectlyPlaced.push({ item, foundIn: foundInFiles });
-                    missing.push(item); // Missing from the required API Doc
+                    missing.push(item); 
                 } else {
-                    missing.push(item); // Completely missing everywhere
+                    missing.push(item); 
                 }
             }
         }
@@ -83,14 +78,13 @@ export class DocValidator {
                     if (allowedExtensions.includes(path.extname(file))) {
                         const content = fs.readFileSync(filePath, 'utf-8');
 
-                        // Extract classes
+
                         const classRegex = /class\s+([a-zA-Z0-9_]+)/g;
                         let match;
                         while ((match = classRegex.exec(content)) !== null) {
                             items.add(match[1]);
                         }
 
-                        // Extract top-level functions (supports JS/TS and Python's def)
                         const functionRegex = /(?:function|const|let|def)\s+([a-zA-Z0-9_]+)\s*=?\s*(?:\([^)]*\))?(?:\s*->\s*[a-zA-Z__\[\]\s,]+)?\s*(?:=>|{|:)/g;
                         while ((match = functionRegex.exec(content)) !== null) {
                             if (!['if', 'for', 'while', 'switch', 'catch', 'import', 'require', 'export'].includes(match[1])) {
@@ -98,8 +92,6 @@ export class DocValidator {
                             }
                         }
 
-                        // Extract class methods in TypeScript (public/private/protected async? name(...) {)
-                        // Simplified to match standard method signatures
                         const methodRegex = /(?:public|private|protected)\s+(?:async\s+)?(?:static\s+)?([a-zA-Z0-9_]+)\s*\(/g;
                         while ((match = methodRegex.exec(content)) !== null) {
                             if (!['constructor', 'catch', 'if', 'for', 'while', 'switch'].includes(match[1])) {
@@ -132,8 +124,6 @@ export class DocValidator {
                         const content = fs.readFileSync(filePath, 'utf-8');
                         const items = new Set<string>();
 
-                        // We strictly only count an item if it has its own dedicated markdown header!
-                        // Casual mentions in bullet lists or text do not count as proper documentation.
                         for (const item of sourceItems) {
                             // Escape item to be perfectly safe in regex
                             const escapedItem = item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -163,14 +153,15 @@ export class DocValidator {
         missing: string[],
         incorrectlyPlaced: Array<{ item: string, foundIn: string[] }>,
         coverage: number
-    ) {
+    ) { 
         const reportPath = path.join(docPath, 'Validation_Report.md');
-        let content = `# Strict Documentation Validation Report\n\n`;
+        let content = `# Documentation Validation Report\n\n`;
         content += `**Coverage Score:** ${coverage}%\n\n`;
         content += `- **Total Code Items (Classes/Functions):** ${totalItems}\n`;
-        content += `- **Properly Documented (in API_Documentation.md):** ${properlyDocumented.length}\n`;
-        content += `- **Missing Items:** ${missing.length}\n`;
-        content += `- **Incorrectly Placed Items:** ${incorrectlyPlaced.length}\n\n`;
+        content += `- **Properly Documented:** ${properlyDocumented.length}\n`;
+        
+        content += `- **Incorrectly Placed Items:** ${incorrectlyPlaced.length}\n`;
+        content += `- **Missing Items:** ${missing.length}\n\n`;
 
         content += `## Properly Documented Items\n`;
         if (properlyDocumented.length === 0) {
