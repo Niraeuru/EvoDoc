@@ -33,7 +33,7 @@ export class DocValidator {
         for (const item of sourceItems) {
             if (apiDocItems.has(item)) {
                 properlyDocumented.push(item);
-            } else {  
+            } else {
                 const foundInFiles: string[] = [];
                 for (const [fileName, items] of Object.entries(docFileItems)) {
                     if (fileName !== 'API_Documentation.md' && items.has(item)) {
@@ -43,9 +43,8 @@ export class DocValidator {
 
                 if (foundInFiles.length > 0) {
                     incorrectlyPlaced.push({ item, foundIn: foundInFiles });
-                    missing.push(item); 
                 } else {
-                    missing.push(item); 
+                    missing.push(item);
                 }
             }
         }
@@ -153,13 +152,13 @@ export class DocValidator {
         missing: string[],
         incorrectlyPlaced: Array<{ item: string, foundIn: string[] }>,
         coverage: number
-    ) { 
+    ) {
         const reportPath = path.join(docPath, 'Validation_Report.md');
         let content = `# Documentation Validation Report\n\n`;
         content += `**Coverage Score:** ${coverage}%\n\n`;
-        content += `- **Total Code Items (Classes/Functions):** ${totalItems}\n`;
+        content += `- **Total Functions:** ${totalItems}\n`;
         content += `- **Properly Documented:** ${properlyDocumented.length}\n`;
-        
+
         content += `- **Incorrectly Placed Items:** ${incorrectlyPlaced.length}\n`;
         content += `- **Missing Items:** ${missing.length}\n\n`;
 
@@ -186,11 +185,10 @@ export class DocValidator {
 
         content += `## Completely Missing Items\n`;
         content += `The following functions or classes were found in the source code but are missing from all documentation:\n\n`;
-        const completelyMissing = missing.filter(m => !incorrectlyPlaced.some(ip => ip.item === m));
-        if (completelyMissing.length === 0) {
+        if (missing.length === 0) {
             content += `- None!\n\n`;
         } else {
-            completelyMissing.forEach(item => {
+            missing.forEach(item => {
                 content += `- \`${item}\`\n`;
             });
             content += `\n`;
