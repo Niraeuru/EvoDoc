@@ -102,9 +102,15 @@ export class DocGenerator {
     private async generateApiDoc(docPath: string, codeContext: string) {
         const prompt = `
         Role: Senior Developer
-        Task: Generate an API_Documentation.md listing key functions, classes, and interfaces.
-        Content: Signatures, parameters, return values.
-        Style: Technical and precise.
+        Task: Generate an API_Documentation.md listing ALL functions, classes, and interfaces extracted from the code.
+        Format Requirements:
+        For EACH item, you MUST include:
+        1. A heading for the item: "### Function: functionName" or "### Class: ClassName".
+        2. A short description immediately after the heading.
+        3. A "#### Parameters" heading followed by parameter descriptions (even if none, write "None").
+        4. A "#### Returns" heading followed by return type description.
+        5. A code block example showing how to use the item (\`\`\`typescript ... \`\`\`).
+        Style: Technical, precise, and strictly formatted.
         Code Context:
         ${codeContext.substring(0, 30000)}
         `;

@@ -2,12 +2,28 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export interface DocItemQuality {
+    exists: boolean;
+    hasDescription: boolean;
+    hasParameters: boolean;
+    hasReturns: boolean;
+    hasExample: boolean;
+    score: number;
+}
+
+export interface SourceItem {
+    name: string;
+    type: 'class' | 'function' | 'method';
+}
+
 export interface ValidationResult {
     totalItems: number;
-    properlyDocumented: string[];
-    missing: string[];
-    incorrectlyPlaced: Array<{ item: string, foundIn: string[] }>;
+    properlyDocumented: { item: SourceItem, quality: DocItemQuality }[];
+    missing: SourceItem[];
+    incorrectlyPlaced: Array<{ item: SourceItem, foundIn: string[] }>;
     coverage: number;
+    classCoverage: number;
+    functionCoverage: number;
 }
 
 export class DocValidator {
@@ -17,50 +33,82 @@ export class DocValidator {
 
         if (!fs.existsSync(docPath)) {
             vscode.window.showWarningMessage('EvoDoc: Documentation folder not found. Please generate documentation first.');
-            return { totalItems: 0, properlyDocumented: [], missing: [], incorrectlyPlaced: [], coverage: 0 };
+            return { totalItems: 0, properlyDocumented: [], missing: [], incorrectlyPlaced: [], coverage: 0, classCoverage: 0, functionCoverage: 0 };
         }
 
-        const sourceItemsSet = await this.extractSourceItems(rootPath);
-        const sourceItems = Array.from(sourceItemsSet);
+        const sourceItemsMap = await this.extractSourceItems(rootPath);
+        const sourceItems = Array.from(sourceItemsMap.values());
 
         const docFileItems = await this.extractDocItemsByFile(docPath, sourceItems);
-        const apiDocItems = docFileItems['API_Documentation.md'] || new Set<string>();
+        const apiDocItems = docFileItems['API_Documentation.md'] || new Map<string, DocItemQuality>();
 
-        const properlyDocumented: string[] = [];
-        const missing: string[] = [];
-        const incorrectlyPlaced: Array<{ item: string, foundIn: string[] }> = [];
+        const properlyDocumented: { item: SourceItem, quality: DocItemQuality }[] = [];
+        const missing: SourceItem[] = [];
+        const incorrectlyPlaced: Array<{ item: SourceItem, foundIn: string[] }> = [];
+
+        let totalScore = 0;
+        let classTotal = 0;
+        let classScore = 0;
+        let funcTotal = 0;
+        let funcScore = 0;
 
         for (const item of sourceItems) {
-            if (apiDocItems.has(item)) {
-                properlyDocumented.push(item);
+            if (apiDocItems.has(item.name)) {
+                const quality = apiDocItems.get(item.name)!;
+                properlyDocumented.push({ item, quality });
+                totalScore += quality.score;
+
+                if (item.type === 'class') {
+                    classTotal++;
+                    classScore += quality.score;
+                } else {
+                    funcTotal++;
+                    funcScore += quality.score;
+                }
             } else {
                 const foundInFiles: string[] = [];
-                for (const [fileName, items] of Object.entries(docFileItems)) {
-                    if (fileName !== 'API_Documentation.md' && items.has(item)) {
+                for (const [fileName, itemsMap] of Object.entries(docFileItems)) {
+                    if (fileName !== 'API_Documentation.md' && itemsMap.has(item.name)) {
                         foundInFiles.push(fileName);
                     }
                 }
 
                 if (foundInFiles.length > 0) {
                     incorrectlyPlaced.push({ item, foundIn: foundInFiles });
+                    // Partial credit 20%
+                    totalScore += 20;
+                    if (item.type === 'class') {
+                        classTotal++;
+                        classScore += 20;
+                    } else {
+                        funcTotal++;
+                        funcScore += 20;
+                    }
                 } else {
                     missing.push(item);
+                    if (item.type === 'class') {
+                        classTotal++;
+                    } else {
+                        funcTotal++;
+                    }
                 }
             }
         }
 
         const totalItems = sourceItems.length;
-        const coverage = totalItems === 0 ? 100 : Math.round((properlyDocumented.length / totalItems) * 100);
+        const coverage = totalItems === 0 ? 100 : Math.round(totalScore / totalItems);
+        const classCoverage = classTotal === 0 ? 100 : Math.round(classScore / classTotal);
+        const functionCoverage = funcTotal === 0 ? 100 : Math.round(funcScore / funcTotal);
 
-        this.generateReport(docPath, totalItems, properlyDocumented, missing, incorrectlyPlaced, coverage);
+        this.generateReport(docPath, totalItems, properlyDocumented, missing, incorrectlyPlaced, coverage, classCoverage, functionCoverage);
 
-        return { totalItems, properlyDocumented, missing, incorrectlyPlaced, coverage };
+        return { totalItems, properlyDocumented, missing, incorrectlyPlaced, coverage, classCoverage, functionCoverage };
     }
 
-    private async extractSourceItems(rootPath: string): Promise<Set<string>> {
+    private async extractSourceItems(rootPath: string): Promise<Map<string, SourceItem>> {
         const allowedExtensions = ['.ts', '.js', '.py', '.java', '.cs', '.go', '.cpp', '.h', '.jsx', '.tsx'];
         const excludeDirs = ['node_modules', '.git', 'out', 'dist', 'build', '.vscode', 'Documentation'];
-        const items = new Set<string>();
+        const items = new Map<string, SourceItem>();
 
         const walk = (dir: string) => {
             if (!fs.existsSync(dir)) return;
@@ -77,24 +125,23 @@ export class DocValidator {
                     if (allowedExtensions.includes(path.extname(file))) {
                         const content = fs.readFileSync(filePath, 'utf-8');
 
-
                         const classRegex = /class\s+([a-zA-Z0-9_]+)/g;
                         let match;
                         while ((match = classRegex.exec(content)) !== null) {
-                            items.add(match[1]);
+                            items.set(match[1], { name: match[1], type: 'class' });
                         }
 
                         const functionRegex = /(?:function|const|let|def)\s+([a-zA-Z0-9_]+)\s*=?\s*(?:\([^)]*\))?(?:\s*->\s*[a-zA-Z__\[\]\s,]+)?\s*(?:=>|{|:)/g;
                         while ((match = functionRegex.exec(content)) !== null) {
                             if (!['if', 'for', 'while', 'switch', 'catch', 'import', 'require', 'export'].includes(match[1])) {
-                                items.add(match[1]);
+                                items.set(match[1], { name: match[1], type: 'function' });
                             }
                         }
 
                         const methodRegex = /(?:public|private|protected)\s+(?:async\s+)?(?:static\s+)?([a-zA-Z0-9_]+)\s*\(/g;
                         while ((match = methodRegex.exec(content)) !== null) {
                             if (!['constructor', 'catch', 'if', 'for', 'while', 'switch'].includes(match[1])) {
-                                items.add(match[1]);
+                                items.set(match[1], { name: match[1], type: 'method' });
                             }
                         }
                     }
@@ -106,8 +153,8 @@ export class DocValidator {
         return items;
     }
 
-    private async extractDocItemsByFile(docPath: string, sourceItems: string[]): Promise<Record<string, Set<string>>> {
-        const fileItems: Record<string, Set<string>> = {};
+    private async extractDocItemsByFile(docPath: string, sourceItems: SourceItem[]): Promise<Record<string, Map<string, DocItemQuality>>> {
+        const fileItems: Record<string, Map<string, DocItemQuality>> = {};
 
         const walk = (dir: string) => {
             if (!fs.existsSync(dir)) return;
@@ -121,17 +168,39 @@ export class DocValidator {
                 } else {
                     if (path.extname(file) === '.md') {
                         const content = fs.readFileSync(filePath, 'utf-8');
-                        const items = new Set<string>();
+                        const items = new Map<string, DocItemQuality>();
 
                         for (const item of sourceItems) {
-                            // Escape item to be perfectly safe in regex
-                            const escapedItem = item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const escapedItem = item.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                            const headingRegex = new RegExp(`(^#+\\s+(?:(?:Class|Function|Interface|Method)\\s*:?\\s*)?[\`*_]*${escapedItem}[\`*_]*(?:\\(|\\s|$))`, 'im');
 
-                            // Matches headers like: "## MyFunction(args)" or "### **MyFunction**"
-                            const headingRegex = new RegExp(`^#+\\s+(?:Class|Function|Interface|Method)?\\s*[\`*_]*${escapedItem}[\`*_]*(?:\\(|\\s|$)`, 'im');
+                            const match = headingRegex.exec(content);
+                            if (match) {
+                                const indexStart = match.index + match[0].length;
+                                const nextHeadingRegex = /^###\s+(?:Class|Function|Interface|Method)?\s*:?/mi;
+                                const contentAfter = content.substring(indexStart);
+                                const nextMatch = nextHeadingRegex.exec(contentAfter);
+                                const sectionContent = nextMatch ? contentAfter.substring(0, nextMatch.index) : contentAfter;
 
-                            if (headingRegex.test(content)) {
-                                items.add(item);
+                                const hasDescription = sectionContent.trim().length > 0 && !sectionContent.trim().startsWith('###') && !sectionContent.trim().startsWith('-');
+                                const hasParameters = /#+\s*Parameters|[-*]\s*\*\*Parameters\*\*/i.test(sectionContent);
+                                const hasReturns = /#+\s*Returns|[-*]\s*\*\*Returns\*\*/i.test(sectionContent);
+                                const hasExample = /```[a-z]*[\s\S]*?```/i.test(sectionContent);
+
+                                let score = 40;
+                                if (hasDescription) score += 20;
+                                if (hasParameters) score += 15;
+                                if (hasReturns) score += 10;
+                                if (hasExample) score += 15;
+
+                                items.set(item.name, {
+                                    exists: true,
+                                    hasDescription,
+                                    hasParameters,
+                                    hasReturns,
+                                    hasExample,
+                                    score
+                                });
                             }
                         }
 
@@ -148,26 +217,38 @@ export class DocValidator {
     private generateReport(
         docPath: string,
         totalItems: number,
-        properlyDocumented: string[],
-        missing: string[],
-        incorrectlyPlaced: Array<{ item: string, foundIn: string[] }>,
-        coverage: number
+        properlyDocumented: { item: SourceItem, quality: DocItemQuality }[],
+        missing: SourceItem[],
+        incorrectlyPlaced: Array<{ item: SourceItem, foundIn: string[] }>,
+        coverage: number,
+        classCoverage: number,
+        functionCoverage: number
     ) {
         const reportPath = path.join(docPath, 'Validation_Report.md');
         let content = `# Documentation Validation Report\n\n`;
-        content += `**Coverage Score:** ${coverage}%\n\n`;
-        content += `- **Total Functions:** ${totalItems}\n`;
+        content += `**Overall Quality Score:** ${coverage}%\n\n`;
+
+        content += `### Granular Coverage\n`;
+        content += `- **Class Coverage:** ${classCoverage}%\n`;
+        content += `- **Function/Method Coverage:** ${functionCoverage}%\n\n`;
+
+        content += `### Breakdown\n`;
+        content += `- **Total Tracked Items:** ${totalItems}\n`;
         content += `- **Properly Documented:** ${properlyDocumented.length}\n`;
+        content += `- **Incorrectly Placed Items:** ${incorrectlyPlaced.length} (Provides 20% partial credit)\n`;
+        content += `- **Missing Items:** ${missing.length} (Provides 0% credit)\n\n`;
 
-        content += `- **Incorrectly Placed Items:** ${incorrectlyPlaced.length}\n`;
-        content += `- **Missing Items:** ${missing.length}\n\n`;
-
-        content += `## Properly Documented Items\n`;
+        content += `## Documented Items Quality\n`;
         if (properlyDocumented.length === 0) {
             content += `- None!\n\n`;
         } else {
-            properlyDocumented.forEach(item => {
-                content += `- \`${item}\`\n`;
+            properlyDocumented.forEach(entry => {
+                const q = entry.quality;
+                content += `- **\`${entry.item.name}\`** [${q.score}%]\n`;
+                content += `  - Description check: ${q.hasDescription ? 'Pass ✅' : 'Fail ❌'}\n`;
+                content += `  - Parameters check: ${q.hasParameters ? 'Pass ✅' : 'Fail ❌'}\n`;
+                content += `  - Returns check: ${q.hasReturns ? 'Pass ✅' : 'Fail ❌'}\n`;
+                content += `  - Example Code check: ${q.hasExample ? 'Pass ✅' : 'Fail ❌'}\n`;
             });
             content += `\n`;
         }
@@ -178,7 +259,7 @@ export class DocValidator {
             content += `- None!\n\n`;
         } else {
             incorrectlyPlaced.forEach(entry => {
-                content += `- \`${entry.item}\` (Found in: ${entry.foundIn.map(f => `\`${f}\``).join(', ')})\n`;
+                content += `- \`${entry.item.name}\` (Found in: ${entry.foundIn.map(f => `\`${f}\``).join(', ')})\n`;
             });
             content += `\n`;
         }
@@ -188,8 +269,8 @@ export class DocValidator {
         if (missing.length === 0) {
             content += `- None!\n\n`;
         } else {
-            missing.forEach(item => {
-                content += `- \`${item}\`\n`;
+            missing.forEach(entry => {
+                content += `- \`${entry.name}\`\n`;
             });
             content += `\n`;
         }

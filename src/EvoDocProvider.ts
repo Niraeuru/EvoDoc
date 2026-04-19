@@ -97,8 +97,8 @@ export class EvoDocProvider implements vscode.WebviewViewProvider {
                     <div class="card">
                         <h3>Actions</h3>
                         <button id="generate-btn" class="primary-btn">Generate Documentation</button>
-                        <button id="export-btn" class="secondary-btn">Download Documentation</button>
                         <button id="validate-btn" class="secondary-btn">Validate Documentation</button>
+                        <button id="export-btn" class="secondary-btn">Download Documentation</button>                        
                     </div>
 
                     <div class="card">
